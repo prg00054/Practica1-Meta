@@ -1,3 +1,3 @@
-Semillas: 77377461, 73774617, 37746177
-Algoritmos: Greedy, GreedyAleatorio, bl, tabu
-Datasets: a280, ch130, pr144, u1060, d18512
+semillas: 77377461, 73774617, 37746177
+algoritmos: Greedy, GreedyAleatorio, bl, tabu
+datasets: a280, ch130, pr144, u1060, d18512
