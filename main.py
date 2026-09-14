@@ -19,10 +19,10 @@ def leer_parametros(ruta_fichero):
     semillas, algoritmos, datasets = [], [], []
 
     with open(ruta_fichero, 'r') as f:
-        lineas = f.readlines()
+        lineas = f.readlines() #readlines lo que hace es devolver una lista donde cada elemento es una linea
 
     for linea in lineas:
-        linea = linea.strip()
+        linea = linea.strip() #strip elimina espacios en blanco
         if not linea or ':' not in linea: continue
 
         partes = linea.split(':', 1)
@@ -74,58 +74,57 @@ class _FilaPerezosa:
         return math.sqrt((xj - xi) ** 2 + (yj - yi) ** 2)
 
 
+#Los parámetros de esta funcion son las coordenadas x e y de dos puntos distintos
+def distanciaEuclidea(x1:int,y1:int,x2:int,y2:int):
+    return math.sqrt( (x2-x1)**2 +  (y2-y1)**2)
+
 def leer_dataset(nombre_dataset):
     ruta_dataset = f"{ruta_proyecto}/datos/{nombre_dataset}.tsp"
 
-    coordenadas = {}
-    dentro_de_coordenadas = False
+    dimension = 0
+    lista_coord = []
+    leyendo_cord = False  # esta variable me sirve como un flag para saber si estoy procesando las coordenadas
 
     with open(ruta_dataset, 'r') as f:
         for linea in f:
             linea = linea.strip()
-
-            if not linea or linea == "EOF":
+            if not linea:
                 continue
 
-            if linea.startswith("NODE_COORD_SECTION"):
-                dentro_de_coordenadas = True
-                continue
+            if linea.find("DIMENSION") == 0:
+                pos = linea.find(":") #busco la posicion donde está `:` para pegar el corte
+                dimension = int(linea[pos + 1:].strip())
 
-            if not dentro_de_coordenadas:
-                continue
+            elif linea.find("NODE_COORD_SECTION") == 0:
+                leyendo_cord = True
 
-            partes = linea.split()
-            id_ciudad = int(partes[0])
-            x = float(partes[1])
-            y = float(partes[2])
-            coordenadas[id_ciudad] = (x, y)
+            elif linea.find("EOF") == 0:
+                leyendo_cord = False
 
-    n = len(coordenadas)
-    coords_lista = [coordenadas[i] for i in range(1, n + 1)]
+            elif leyendo_cord:
+                partes = linea.split()
+                # con esta funcion divido en partes la linea por espacios de forma que asi saco el nº de ciudad y las coordenadas
+                # id_ciudad = partes[0]
+                x = float(partes[1])
+                y = float(partes[2])
+                lista_coord.append((x, y))
 
-    if n <= UMBRAL_MATRIZ_DENSA:
-        D = [[0.0] * n for _ in range(n)]
-        for i in range(1, n + 1):
-            xi, yi = coordenadas[i]
-            for j in range(i + 1, n + 1):
-                xj, yj = coordenadas[j]
-                dist = math.sqrt((xj - xi) ** 2 + (yj - yi) ** 2)
-                D[i - 1][j - 1] = dist
-                D[j - 1][i - 1] = dist
+    if dimension <= UMBRAL_MATRIZ_DENSA:
+        distancias = [[0.0 for _ in range(dimension)] for _ in range(dimension)]
+        for i in range(dimension):
+            for j in range(i + 1, dimension):
+                    distancias[i][j] = distancias[j][i] = distanciaEuclidea(lista_coord[i][0], lista_coord[i][1],
+                                                                            lista_coord[j][0], lista_coord[j][1])
     else:
-        D = MatrizDistanciasPerezosa(coords_lista)
+        D = MatrizDistanciasPerezosa(lista_coord)
 
-    print(f"  [+] Cargando datos del dataset: {nombre_dataset}... ({n} ciudades)")
+    print(f"  [+] Cargando datos del dataset: {nombre_dataset}... ({dimension} ciudades)")
 
     return D
-
-
-
 
 # =====================================================================
 # 3. Ejecucion de la Experimentacion
 # =====================================================================
-
 def mis_algoritmos(algoritmo, datos, rdm):
     algoritmos = {
         'greedy': local.greedy,
@@ -144,6 +143,14 @@ def mis_algoritmos(algoritmo, datos, rdm):
 ruta_proyecto = "."  # <-- ajustar a la ruta real del proyecto
 ruta_params = f"{ruta_proyecto}/parametros.txt"
 semillas, algoritmos, datasets = leer_parametros(ruta_params)
+
+#Voy a poner el trozo este por aqui que era al final lo que queria poner pero puede no vaya justo aquí
+for _ in range(len(datasets)):
+    D = leer_dataset(datasets[_]) #aqui ya cargo la matriz de distancias segun los datasets
+    sumatorios_ciudad = [(fila,sum(fila)) for fila in D]
+sumatorios_ciudad.sort(key = lambda x: x[1])
+ciudad_comienzo = sumatorios_ciudad[0][0]
+
 
 print("\033[1mPARAMETROS CARGADOS CORRECTAMENTE\033[0m")
 summary = pd.DataFrame({
