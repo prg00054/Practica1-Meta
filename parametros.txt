@@ -1,3 +1,4 @@
 semillas: 77377461, 73774617, 37746177
 algoritmos: Greedy, GreedyAleatorio
-datasets: a280, ch130, pr144, u1060, d18512
+datasets: a280, ch130, pr144, u1060
+k: 5

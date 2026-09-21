@@ -4,8 +4,7 @@ import time
 import random
 import pandas as pd
 
-#import local
-#import evolutivo
+import local
 
 # =====================================================================
 # 1. Carga de Parametros
@@ -17,6 +16,7 @@ import pandas as pd
 
 def leer_parametros(ruta_fichero):
     semillas, algoritmos, datasets = [], [], []
+    k = None
 
     with open(ruta_fichero, 'r') as f:
         lineas = f.readlines() #readlines lo que hace es devolver una lista donde cada elemento es una linea
@@ -32,8 +32,9 @@ def leer_parametros(ruta_fichero):
         if 'semilla' in etiqueta: semillas = [int(v) for v in valores]
         elif 'algoritmo' in etiqueta: algoritmos = valores
         elif 'dataset' in etiqueta: datasets = valores
+        elif 'k' in etiqueta: k = int(valores[0])
 
-    return semillas, algoritmos, datasets
+    return semillas, algoritmos, datasets, k
 
 
 # =====================================================================
@@ -79,7 +80,7 @@ def distanciaEuclidea(x1:int,y1:int,x2:int,y2:int):
     return math.sqrt( (x2-x1)**2 +  (y2-y1)**2)
 
 def leer_dataset(nombre_dataset):
-    ruta_dataset = f"{ruta_proyecto}/datos/{nombre_dataset}.tsp"
+    ruta_dataset = f"{ruta_proyecto}/{nombre_dataset}.tsp"
 
     dimension = 0
     lista_coord = []
@@ -124,8 +125,8 @@ def leer_dataset(nombre_dataset):
 def mis_algoritmos(algoritmo, datos, rdm):
     algoritmos = {
         'greedy': local.greedy,
-        'greedyaleatorio': local.greedy_aleatorio,
-        'evolutivo': evolutivo.ejecutar
+        #'greedyaleatorio': local.greedy_aleatorio,
+        #'evolutivo': local.ejecutar
     }
 
     clave = algoritmo.strip().lower().replace(" ", "")
@@ -138,12 +139,12 @@ def mis_algoritmos(algoritmo, datos, rdm):
 # Ejecucion y visualizacion de parametros
 ruta_proyecto = "."  # <-- ajustar a la ruta real del proyecto
 ruta_params = f"{ruta_proyecto}/parametros.txt"
-semillas, algoritmos, datasets = leer_parametros(ruta_params)
+semillas, algoritmos, datasets, k = leer_parametros(ruta_params)
 
 print("\033[1mPARAMETROS CARGADOS CORRECTAMENTE\033[0m")
 summary = pd.DataFrame({
-    'Parametro': ['Semillas', 'Algoritmos', 'Datasets'],
-    'Valores': [str(semillas), ", ".join(algoritmos), ", ".join(datasets)]
+    'Parametro': ['Semillas', 'Algoritmos', 'Datasets', 'K'],
+    'Valores': [str(semillas), ", ".join(algoritmos), ", ".join(datasets), str(k)]
 })
 print(summary)
 
@@ -157,6 +158,8 @@ for dataset in datasets:
     for semilla in semillas:
         rdm = random.Random(semilla)
         for algoritmo in algoritmos:
+            if algoritmo.strip().lower() != 'greedy': #mientras para probar
+                continue
             print(f"  > {algoritmo:16} | Semilla: {semilla:6}", end="")
 
             inicio = time.time()
