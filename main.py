@@ -122,10 +122,10 @@ def leer_dataset(nombre_dataset):
 # =====================================================================
 # 3. Ejecucion de la Experimentacion
 # =====================================================================
-def mis_algoritmos(algoritmo, datos, rdm):
+def mis_algoritmos(algoritmo, datos, rdm, k):
     algoritmos = {
-        'greedy': local.greedy,
-        #'greedyaleatorio': local.greedy_aleatorio,
+        'greedy': lambda D, r, _k: local.greedy(D, r),
+        'greedyaleatorio': lambda D, r, _k: local.greedy_aleatorio(D, r, _k),
         #'evolutivo': local.ejecutar
     }
 
@@ -133,7 +133,7 @@ def mis_algoritmos(algoritmo, datos, rdm):
     if clave not in algoritmos:
         raise ValueError(f"Algoritmo desconocido: {algoritmo}")
 
-    return algoritmos[clave](datos, rdm)
+    return algoritmos[clave](datos, rdm, k)
 
 
 # Ejecucion y visualizacion de parametros
@@ -158,12 +158,10 @@ for dataset in datasets:
     for semilla in semillas:
         rdm = random.Random(semilla)
         for algoritmo in algoritmos:
-            if algoritmo.strip().lower() != 'greedy': #mientras para probar
-                continue
-            print(f"  > {algoritmo:16} | Semilla: {semilla:6}", end="")
+            print(f"  > {algoritmo:16} | Semilla: {semilla:6}", end="", flush = True)
 
             inicio = time.time()
-            solucion, coste = mis_algoritmos(algoritmo, datos, rdm)
+            solucion, coste = mis_algoritmos(algoritmo, datos, rdm, k)
             fin = time.time()
 
             print(f" | Coste: {coste:12.2f} | Tiempo: {fin-inicio:.4f}s")
