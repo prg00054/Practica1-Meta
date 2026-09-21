@@ -91,10 +91,6 @@ def leer_dataset(nombre_dataset):
             if not linea:
                 continue
 
-            if linea.find("DIMENSION") == 0:
-                pos = linea.find(":") #busco la posicion donde está `:` para pegar el corte
-                dimension = int(linea[pos + 1:].strip())
-
             elif linea.find("NODE_COORD_SECTION") == 0:
                 leyendo_cord = True
 
@@ -108,12 +104,12 @@ def leer_dataset(nombre_dataset):
                 x = float(partes[1])
                 y = float(partes[2])
                 lista_coord.append((x, y))
-
+    dimension = len(lista_coord)
     if dimension <= UMBRAL_MATRIZ_DENSA:
-        distancias = [[0.0 for _ in range(dimension)] for _ in range(dimension)]
+        D = [[0.0 for _ in range(dimension)] for _ in range(dimension)]
         for i in range(dimension):
             for j in range(i + 1, dimension):
-                    distancias[i][j] = distancias[j][i] = distanciaEuclidea(lista_coord[i][0], lista_coord[i][1],
+                    D[i][j] = D[j][i] = distanciaEuclidea(lista_coord[i][0], lista_coord[i][1],
                                                                             lista_coord[j][0], lista_coord[j][1])
     else:
         D = MatrizDistanciasPerezosa(lista_coord)
@@ -143,14 +139,6 @@ def mis_algoritmos(algoritmo, datos, rdm):
 ruta_proyecto = "."  # <-- ajustar a la ruta real del proyecto
 ruta_params = f"{ruta_proyecto}/parametros.txt"
 semillas, algoritmos, datasets = leer_parametros(ruta_params)
-
-#Voy a poner el trozo este por aqui que era al final lo que queria poner pero puede no vaya justo aquí
-for _ in range(len(datasets)):
-    D = leer_dataset(datasets[_]) #aqui ya cargo la matriz de distancias segun los datasets
-    sumatorios_ciudad = [(fila,sum(fila)) for fila in D]
-sumatorios_ciudad.sort(key = lambda x: x[1])
-ciudad_comienzo = sumatorios_ciudad[0][0]
-
 
 print("\033[1mPARAMETROS CARGADOS CORRECTAMENTE\033[0m")
 summary = pd.DataFrame({
