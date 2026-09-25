@@ -80,7 +80,7 @@ def distanciaEuclidea(x1:int,y1:int,x2:int,y2:int):
     return math.sqrt( (x2-x1)**2 +  (y2-y1)**2)
 
 def leer_dataset(nombre_dataset):
-    ruta_dataset = f"{ruta_proyecto}/{nombre_dataset}.tsp"
+    ruta_dataset = f"{ruta_proyecto}/datos/{nombre_dataset}.tsp"
 
     dimension = 0
     lista_coord = []
@@ -164,6 +164,6 @@ for dataset in datasets:
             solucion, coste = mis_algoritmos(algoritmo, datos, rdm, k)
             fin = time.time()
 
-            print(f" | Coste: {coste:12.2f} | Tiempo: {fin-inicio:.4f}s")
+            print(f" | Coste: {coste:12.2f} | Tiempo: {(fin-inicio)*1000:.4f}ms")
 
 print("\n" + "=" * 30 + "\n\033[1mPROCESO FINALIZADO\033[0m")

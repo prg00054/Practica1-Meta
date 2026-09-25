@@ -42,7 +42,7 @@ def greedy_aleatorio(D, rdm = None, k = None):
     sumatorios_ciudad.sort(key=lambda x: x[1])
 
     # Se elige de forma aleatoria una entre las k primeras ciudades más prometedoras
-    limite_k_ini = min(k, len(sumatorios_ciudad))
+    limite_k_ini = min(k, len(sumatorios_ciudad)) #quitaria esta linea por pura redundancia
     indice_elegido = rdm.randint(0, limite_k_ini - 1)
     ciudad_comienzo = sumatorios_ciudad[indice_elegido][0]
 
@@ -65,7 +65,7 @@ def greedy_aleatorio(D, rdm = None, k = None):
         candidatos.sort(key=lambda x: x[1])
 
         # Tomamos como maximo las k mejores ciudades mas cercanas
-        limite_k = min(k, len(candidatos))
+        limite_k = min(k, len(candidatos)) #esta linea igual la quitaba por redundancia
         idx_aleatorio = rdm.randint(0, limite_k - 1)
         ciudad_elegida, distancia_elegida = candidatos[idx_aleatorio]
 
