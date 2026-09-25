@@ -79,3 +79,29 @@ def greedy_aleatorio(D, rdm = None, k = None):
 
     coste_sol += D[ciudad_actual][ciudad_comienzo]  # Cierre del ciclo volviendo al inicio
     return solucion, coste_sol
+
+
+def calcular_coste(ruta, D):
+    coste = 0.0
+    n = len(ruta)
+    for i in range(n):
+        coste += D[ruta[i]][ruta[(i + 1) % n]]
+    return coste
+
+
+def busqueda_local_primer_mejor(D, rdm, k=None):
+    n = len(D)
+
+    # 1. Solución inicial aleatoria basada en la semilla
+    solucion = list(range(n))
+    rdm.shuffle(solucion)
+    coste_sol = calcular_coste(solucion, D)
+
+    # 2. Inicialización de Don't Look Bits (DLB): todos a 0 (prometedores)
+    dlb = [0] * n
+    hay_mejora_global = True
+
+    while hay_mejora_global:
+        hay_mejora_global = False
+
+        for i in range(n):
