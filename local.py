@@ -93,8 +93,8 @@ def busqueda_local_primer_mejor(D, rdm, k=None):
     n = len(D)
 
     # 1. Solución inicial aleatoria basada en la semilla
-    solucion = list(range(n))
-    rdm.shuffle(solucion)
+    solucion = list(range(n)) #esto crea una lista de n elementos
+    rdm.shuffle(solucion) #esto cambia aleatoriamente soluciones
     coste_sol = calcular_coste(solucion, D)
 
     # 2. Inicialización de Don't Look Bits (DLB): todos a 0 (prometedores)
@@ -105,3 +105,37 @@ def busqueda_local_primer_mejor(D, rdm, k=None):
         hay_mejora_global = False
 
         for i in range(n):
+            if dlb[i] == 1:
+                continue #ya hemos mirado esa opcion y no es prometedora, asi que pasamos
+
+            mejora_Local = False
+
+            for j in range(i+2,n):
+                if i == 0 and j == n-1: #aqui tenemos el caso que intercambiemos la primera y ultima ciudad
+                    continue
+
+                #extraemos las 4 ciudades involucradas en el cambio: A->B->...->C->D
+                ciudad_A = solucion[i]
+                ciudad_B = solucion[i+1]
+                ciudad_C = solucion[j]
+                ciudad_D = solucion[(j+1) % n]
+
+                #Aqui calculamos la diferencia en el coste que tenemos al intercambiar
+                delta = (D[ciudad_A][ciudad_C] + D[ciudad_B][ciudad_D]) - (D[ciudad_A][ciudad_B] + D[ciudad_C][ciudad_D])
+
+                if delta < -0.0001:
+                    solucion[i+1 : j+1] = solucion[i+1 : j+1][::-1]
+                    coste_sol += delta
+                    dlb[ciudad_A] = 0
+                    dlb[ciudad_B] = 0
+                    dlb[ciudad_C] = 0
+                    dlb[ciudad_D] = 0
+
+                    hay_mejora_global = True
+                    mejora_Local = True
+
+                    break #estamos con el primero el mejor asi que cortamos
+
+            if not mejora_Local:
+                dlb[i] = 1
+    return solucion, coste_sol

@@ -126,7 +126,7 @@ def mis_algoritmos(algoritmo, datos, rdm, k):
     algoritmos = {
         'greedy': lambda D, r, _k: local.greedy(D, r),
         'greedyaleatorio': lambda D, r, _k: local.greedy_aleatorio(D, r, _k),
-        #'evolutivo': local.ejecutar
+        'busqueda local': lambda D, r, _k: local.busqueda_local_primer_mejor(D,rdm,k)
     }
 
     clave = algoritmo.strip().lower().replace(" ", "")
