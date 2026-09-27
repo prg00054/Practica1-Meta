@@ -10,7 +10,7 @@ import local
 # 1. Carga de Parametros
 # =====================================================================
 # Fichero parametros.txt con formato:
-#   Semillas: 1, 3, 8
+#   Semillas: 77377461, 73774617, 37746177
 #   Algoritmos: Greedy, GreedyAleatorio
 #   Datasets: a280, ch130, pr144, u1060, d18512
 
