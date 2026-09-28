@@ -89,53 +89,66 @@ def calcular_coste(ruta, D):
     return coste
 
 
+def operador_2opt(i,solucion,D,n,dlb):
+    for j in range(i + 1, n):
+        ciudad_i = solucion[i]
+        #necesitamos los arcos de las ciudades que van antes y despues
+        ant_ciudad_i = solucion[i-1]
+        post_ciudad_i = solucion[i+1]
+
+        ciudad_j = solucion[j]
+        ant_ciudad_j = solucion[(j-1) % n]
+        post_ciudad_j = solucion[(j+1) % n]
+
+        #caso en el que las ciudades estan separadas
+        if j != i and not (i==0 and j == n-1):
+            arcos_viejos = (D[ant_ciudad_i][ciudad_i] + D[ciudad_i][post_ciudad_i] +
+                            D[ant_ciudad_j][ciudad_j] + D[ciudad_j][post_ciudad_j])
+
+            arcos_nuevos = (D[ant_ciudad_i][ciudad_j] + D[ciudad_j][post_ciudad_i] +
+                            D[ant_ciudad_j][ciudad_i] + D[ciudad_i][post_ciudad_j])
+        delta = arcos_nuevos - arcos_viejos
+
+    else:
+        # caso en el que las ciudades estan adyacentes
+        if j == i+1:
+            arcos_viejos = D[ant_ciudad_i][ciudad_i] + D[ciudad_i][post_ciudad_i]
+            arcos_nuevos = D[ant_ciudad_i][ciudad_j] + D[ciudad_j][post_ciudad_i]
+        #si encontramos mejora
+        if delta < -0.0001:
+            solucion[i], solucion[j] = solucion[j], solucion[i]
+            dlb[ciudad_i] = 0
+            dlb[ciudad_j] = 0
+
+            return True, delta
+    return False,0
+
 def busqueda_local_primer_mejor(D, rdm, k=None):
     n = len(D)
 
-    # 1. Solución inicial aleatoria basada en la semilla
+    # Generamos una solucion inicial aleatoria basada en la semilla
     solucion = list(range(n)) #esto crea una lista de n elementos
     rdm.shuffle(solucion) #esto cambia aleatoriamente soluciones
     coste_sol = calcular_coste(solucion, D)
 
-    # 2. Inicialización de Don't Look Bits (DLB): todos a 0 (prometedores)
+    # Don't Look Bits (DLB)
     dlb = [0] * n
     hay_mejora_global = True
+    vueltas = 0
 
-    while hay_mejora_global:
+    while hay_mejora_global and (k is None or vueltas < k):
         hay_mejora_global = False
+        vueltas += 1
 
         for i in range(n):
             if dlb[i] == 1:
                 continue #ya hemos mirado esa opcion y no es prometedora, asi que pasamos
 
-            mejora_Local = False
+            mejora_Local, delta = operador_2opt(i,solucion,D,n,dlb)
 
-            for j in range(i+2,n):
-                if i == 0 and j == n-1: #aqui tenemos el caso que intercambiemos la primera y ultima ciudad
-                    continue
-
-                #extraemos las 4 ciudades involucradas en el cambio: A->B->...->C->D
-                ciudad_A = solucion[i]
-                ciudad_B = solucion[i+1]
-                ciudad_C = solucion[j]
-                ciudad_D = solucion[(j+1) % n]
-
-                #Aqui calculamos la diferencia en el coste que tenemos al intercambiar
-                delta = (D[ciudad_A][ciudad_C] + D[ciudad_B][ciudad_D]) - (D[ciudad_A][ciudad_B] + D[ciudad_C][ciudad_D])
-
-                if delta < -0.0001:
-                    solucion[i+1 : j+1] = solucion[i+1 : j+1][::-1]
-                    coste_sol += delta
-                    dlb[ciudad_A] = 0
-                    dlb[ciudad_B] = 0
-                    dlb[ciudad_C] = 0
-                    dlb[ciudad_D] = 0
-
-                    hay_mejora_global = True
-                    mejora_Local = True
-
-                    break #estamos con el primero el mejor asi que cortamos
-
-            if not mejora_Local:
+            if mejora_Local:
+                coste_sol += delta
+                hay_mejora_global = True
+            else:
                 dlb[i] = 1
     return solucion, coste_sol
