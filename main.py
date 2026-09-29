@@ -10,7 +10,7 @@ import local
 # 1. Carga de Parametros
 # =====================================================================
 # Fichero parametros.txt con formato:
-#   Semillas: 1, 3, 8
+#   Semillas: 77377461, 73774617, 37746177
 #   Algoritmos: Greedy, GreedyAleatorio
 #   Datasets: a280, ch130, pr144, u1060, d18512
 
@@ -126,7 +126,7 @@ def mis_algoritmos(algoritmo, datos, rdm, k):
     algoritmos = {
         'greedy': lambda D, r, _k: local.greedy(D, r),
         'greedyaleatorio': lambda D, r, _k: local.greedy_aleatorio(D, r, _k),
-        'busqueda local': lambda D, r, _k: local.busqueda_local_primer_mejor(D,rdm,k)
+        'busquedalocal': lambda D, r, _k: local.busqueda_local_primer_mejor(D,rdm,k)
     }
 
     clave = algoritmo.strip().lower().replace(" ", "")
