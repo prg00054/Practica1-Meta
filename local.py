@@ -37,47 +37,27 @@ def greedy(D, rdm = None):
 
 
 def greedy_aleatorio(D, rdm = None, k = None):
-    # 1. Calculamos el vector ordenado por la sumatoria de distancias
-    sumatorios_ciudad = [(i, sum(D[i])) for i in range(len(D))]
-    sumatorios_ciudad.sort(key=lambda x: x[1])
+    # 1. Calculamos el vector ordenado por la sumatoria de distancias al resto
+    # Formato: lista de tuplas (id_ciudad, suma_distancias)
+    vector_ordenado = [(i, sum(D[i])) for i in range(len(D))]
+    vector_ordenado.sort(key=lambda x: x[1])  # Orden ascendente por sumatoria
 
-    # Se elige de forma aleatoria una entre las k primeras ciudades más prometedoras
-    limite_k_ini = min(k, len(sumatorios_ciudad)) #quitaria esta linea por pura redundancia
-    indice_elegido = rdm.randint(0, limite_k_ini - 1)
-    ciudad_comienzo = sumatorios_ciudad[indice_elegido][0]
+    # Extraemos solo los identificadores de las ciudades en orden
+    ciudades_disponibles = [ciudad for ciudad, _ in vector_ordenado]
+    solucion = []
 
-    # Inicializacion de variables necesarias para la busqueda
-    solucion = [ciudad_comienzo]
-    visitados = [False] * len(D)
-    visitados[ciudad_comienzo] = True
-    ciudad_actual = ciudad_comienzo
-    coste_sol = 0
-
-    n = 1
-    while n < len(D):
-        # Recogemos todas las ciudades no visitadas con su distancia a la ciudad_actual
-        candidatos = []
-        for j in range(len(D)):
-            if not visitados[j]:
-                candidatos.append((j, D[ciudad_actual][j]))
-
-        # Ordenamos los candidatos de menor a mayor distancia
-        candidatos.sort(key=lambda x: x[1])
-
-        # Tomamos como maximo las k mejores ciudades mas cercanas
-        limite_k = min(k, len(candidatos)) #esta linea igual la quitaba por redundancia
+    # 2. Construcción: en cada paso se elige al azar una entre las K primeras del vector
+    while len(ciudades_disponibles) > 0:
+        limite_k = min(k, len(ciudades_disponibles))
         idx_aleatorio = rdm.randint(0, limite_k - 1)
-        ciudad_elegida, distancia_elegida = candidatos[idx_aleatorio]
 
-        # Aplicamos el movimiento
+        # Obtenemos la ciudad elegida y la eliminamos del vector disponible
+        ciudad_elegida = ciudades_disponibles.pop(idx_aleatorio)
         solucion.append(ciudad_elegida)
-        visitados[ciudad_elegida] = True
-        coste_sol += distancia_elegida
-        ciudad_actual = ciudad_elegida
 
-        n += 1
+    # 3. Cálculo del coste total del ciclo hamiltoniano resultante
+    coste_sol = calcular_coste(solucion, D)
 
-    coste_sol += D[ciudad_actual][ciudad_comienzo]  # Cierre del ciclo volviendo al inicio
     return solucion, coste_sol
 
 
