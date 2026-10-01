@@ -17,6 +17,7 @@ import local
 def leer_parametros(ruta_fichero):
     semillas, algoritmos, datasets = [], [], []
     k = None
+    iteraciones = None
 
     with open(ruta_fichero, 'r') as f:
         lineas = f.readlines() #readlines lo que hace es devolver una lista donde cada elemento es una linea
@@ -33,8 +34,9 @@ def leer_parametros(ruta_fichero):
         elif 'algoritmo' in etiqueta: algoritmos = valores
         elif 'dataset' in etiqueta: datasets = valores
         elif 'k' in etiqueta: k = int(valores[0])
+        elif 'iteraciones' in etiqueta: iteraciones = int(valores[0])
 
-    return semillas, algoritmos, datasets, k
+    return semillas, algoritmos, datasets, k, iteraciones
 
 
 # =====================================================================
@@ -122,24 +124,24 @@ def leer_dataset(nombre_dataset):
 # =====================================================================
 # 3. Ejecucion de la Experimentacion
 # =====================================================================
-def mis_algoritmos(algoritmo, datos, rdm, k):
+def mis_algoritmos(algoritmo, datos, rdm, k,_it):
     algoritmos = {
-        'greedy': lambda D, r, _k: local.greedy(D, r),
-        'greedyaleatorio': lambda D, r, _k: local.greedy_aleatorio(D, r, _k),
-        'busquedalocal': lambda D, r, _k: local.busqueda_local_primer_mejor(D,rdm,k)
+        'greedy': lambda D, r, _k,_it: local.greedy(D, r),
+        'greedyaleatorio': lambda D, r, _k,_it: local.greedy_aleatorio(D, r, _k),
+        'busquedalocal': lambda D, r, _k,_it: local.busqueda_local_primer_mejor(D,rdm,k,_it)
     }
 
     clave = algoritmo.strip().lower().replace(" ", "")
     if clave not in algoritmos:
         raise ValueError(f"Algoritmo desconocido: {algoritmo}")
 
-    return algoritmos[clave](datos, rdm, k)
+    return algoritmos[clave](datos, rdm, k, _it)
 
 
 # Ejecucion y visualizacion de parametros
 ruta_proyecto = "."  # <-- ajustar a la ruta real del proyecto
 ruta_params = f"{ruta_proyecto}/parametros.txt"
-semillas, algoritmos, datasets, k = leer_parametros(ruta_params)
+semillas, algoritmos, datasets, k, iteraciones = leer_parametros(ruta_params)
 
 print("\033[1mPARAMETROS CARGADOS CORRECTAMENTE\033[0m")
 summary = pd.DataFrame({
@@ -161,7 +163,7 @@ for dataset in datasets:
             print(f"  > {algoritmo:16} | Semilla: {semilla:6}", end="", flush = True)
 
             inicio = time.time()
-            solucion, coste = mis_algoritmos(algoritmo, datos, rdm, k)
+            solucion, coste = mis_algoritmos(algoritmo, datos, rdm, k,iteraciones)
             fin = time.time()
 
             print(f" | Coste: {coste:12.2f} | Tiempo: {(fin-inicio)*1000:.4f}ms")

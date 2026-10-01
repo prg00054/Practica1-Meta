@@ -74,36 +74,41 @@ def operador_2opt(i,solucion,D,n,dlb):
         ciudad_i = solucion[i]
         #necesitamos los arcos de las ciudades que van antes y despues
         ant_ciudad_i = solucion[i-1]
-        post_ciudad_i = solucion[i+1]
+        post_ciudad_i = solucion[(i+1) % n]
 
         ciudad_j = solucion[j]
         ant_ciudad_j = solucion[(j-1) % n]
         post_ciudad_j = solucion[(j+1) % n]
 
         #caso en el que las ciudades estan separadas
-        if j != i and not (i==0 and j == n-1):
+        if j != i + 1 and not (i==0 and j == n-1):
             arcos_viejos = (D[ant_ciudad_i][ciudad_i] + D[ciudad_i][post_ciudad_i] +
                             D[ant_ciudad_j][ciudad_j] + D[ciudad_j][post_ciudad_j])
-
             arcos_nuevos = (D[ant_ciudad_i][ciudad_j] + D[ciudad_j][post_ciudad_i] +
                             D[ant_ciudad_j][ciudad_i] + D[ciudad_i][post_ciudad_j])
-        delta = arcos_nuevos - arcos_viejos
+            delta = arcos_nuevos - arcos_viejos
 
-    else:
-        # caso en el que las ciudades estan adyacentes
-        if j == i+1:
-            arcos_viejos = D[ant_ciudad_i][ciudad_i] + D[ciudad_i][post_ciudad_i]
-            arcos_nuevos = D[ant_ciudad_i][ciudad_j] + D[ciudad_j][post_ciudad_i]
-        #si encontramos mejora
+        else:
+            # caso en el que las ciudades estan adyacentes
+            if j == i+1:
+                arcos_viejos = D[ant_ciudad_i][ciudad_i] + D[ciudad_j][post_ciudad_j]
+                arcos_nuevos = D[ant_ciudad_i][ciudad_j] + D[ciudad_i][post_ciudad_j]
+                delta = arcos_nuevos - arcos_viejos
+            else:
+                # si las ciudades son adyacentes y son la primera y la ultima
+                arcos_viejos = D[ant_ciudad_j][ciudad_j] + D[ciudad_i][post_ciudad_i]
+                arcos_nuevos = D[ant_ciudad_j][ciudad_i] + D[ciudad_j][post_ciudad_i]
+                delta = arcos_nuevos - arcos_viejos
+
+            #si encontramos mejora
         if delta < -0.0001:
             solucion[i], solucion[j] = solucion[j], solucion[i]
             dlb[ciudad_i] = 0
             dlb[ciudad_j] = 0
-
             return True, delta
     return False,0
 
-def busqueda_local_primer_mejor(D, rdm, k=None):
+def busqueda_local_primer_mejor(D, rdm, k=None,it=None):
     n = len(D)
 
     # Generamos una solucion inicial aleatoria basada en la semilla
@@ -116,7 +121,7 @@ def busqueda_local_primer_mejor(D, rdm, k=None):
     hay_mejora_global = True
     vueltas = 0
 
-    while hay_mejora_global and (k is None or vueltas < k):
+    while hay_mejora_global and (it is None or vueltas < it):
         hay_mejora_global = False
         vueltas += 1
 
