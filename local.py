@@ -110,11 +110,8 @@ def operador_2opt(i,solucion,D,n,dlb):
 
 def busqueda_local_primer_mejor(D, rdm, k=None,it=None):
     n = len(D)
-
     # Generamos una solucion inicial aleatoria basada en la semilla
-    solucion = list(range(n)) #esto crea una lista de n elementos
-    rdm.shuffle(solucion) #esto cambia aleatoriamente soluciones
-    coste_sol = calcular_coste(solucion, D)
+    solucion, coste_sol = greedy_aleatorio(D,rdm,k) #esto crea una lista de n elementos
 
     # Don't Look Bits (DLB)
     dlb = [0] * n
