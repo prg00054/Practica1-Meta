@@ -160,6 +160,8 @@ for dataset in datasets:
     for semilla in semillas:
         rdm = random.Random(semilla)
         for algoritmo in algoritmos:
+            if algoritmo.strip().lower() == 'greedy' and semilla != semillas[0]:
+                continue
             print(f"  > {algoritmo:16} | Semilla: {semilla:6}", end="", flush = True)
 
             inicio = time.time()
