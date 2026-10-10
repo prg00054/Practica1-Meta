@@ -50,12 +50,17 @@ def calcular_coste(ruta, D):
     return coste
 
 
-def operador_2opt(i,solucion,D,n,dlb):
+def operador_2opt(i,solucion,D,n,dlb,evals_restantes):
+    evals = 0
+    ciudad_i = solucion[i]
+    # necesitamos los arcos de las ciudades que van antes y despues
+    ant_ciudad_i = solucion[i - 1]
+    post_ciudad_i = solucion[(i + 1) % n]
+
     for j in range(i + 1, n):
-        ciudad_i = solucion[i]
-        #necesitamos los arcos de las ciudades que van antes y despues
-        ant_ciudad_i = solucion[i-1]
-        post_ciudad_i = solucion[(i+1) % n]
+        if evals >= evals_restantes:
+            break
+        evals += 1
 
         ciudad_j = solucion[j]
         ant_ciudad_j = solucion[(j-1) % n]
@@ -86,8 +91,8 @@ def operador_2opt(i,solucion,D,n,dlb):
             solucion[i], solucion[j] = solucion[j], solucion[i]
             dlb[ciudad_i] = 0
             dlb[ciudad_j] = 0
-            return True, delta
-    return False,0
+            return True, delta, evals
+    return False,0,evals
 
 def busqueda_local_primer_mejor(D, rdm, k=None,it=None):
     n = len(D)
@@ -96,22 +101,28 @@ def busqueda_local_primer_mejor(D, rdm, k=None,it=None):
 
     # Don't Look Bits (DLB)
     dlb = [0] * n
+    evals = 0
     hay_mejora_global = True
-    vueltas = 0
 
-    while hay_mejora_global and (it is None or vueltas < it):
+    while hay_mejora_global and (it is None or evals < it):
         hay_mejora_global = False
-        vueltas += 1
 
         for i in range(n):
-            if dlb[i] == 1:
-                continue #ya hemos mirado esa opcion y no es prometedora, asi que pasamos
+            if it is not None and evals >= it:
+                break
+            ciudad = solucion[i]
 
-            mejora_Local, delta = operador_2opt(i,solucion,D,n,dlb)
+            if dlb[ciudad] == 1:
+                continue
+
+            restantes = (it - evals) if it is not None else n
+
+            mejora_Local, delta, usadas = operador_2opt(i,solucion,D,n,dlb,restantes)
+            evals += usadas
 
             if mejora_Local:
                 coste_sol += delta
                 hay_mejora_global = True
             else:
-                dlb[i] = 1
+                dlb[ciudad] = 1
     return solucion, coste_sol

@@ -33,7 +33,7 @@ def leer_parametros(ruta_fichero):
         if 'semilla' in etiqueta: semillas = [int(v) for v in valores]
         elif 'algoritmo' in etiqueta: algoritmos = valores
         elif 'dataset' in etiqueta: datasets = valores
-        elif 'k' in etiqueta: k = int(valores[0])
+        elif etiqueta == 'k': k = int(valores[0])
         elif 'iteraciones' in etiqueta: iteraciones = int(valores[0])
 
     return semillas, algoritmos, datasets, k, iteraciones
