@@ -1,5 +1,5 @@
 semillas: 77377461, 73774617, 37746177
-algoritmos: Greedy, GreedyAleatorio, BusquedaLocal
-datasets: a280, ch130, pr144, u1060, d18512
+algoritmos: Greedy, GreedyAleatorio, BusquedaLocal, BusquedaTabu
+datasets: a280, ch130, pr144, u1060
 k: 5
 iteraciones: 10000
