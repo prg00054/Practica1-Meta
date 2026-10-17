@@ -3,44 +3,39 @@ from collections import deque
 import random
 
 # algoritmo greedy
-def greedy(D, rdm = None):
+def greedy(D, rdm = None, f_log= None):
     #primero tenemos que calcular la ciudad por la que comenzaremos
-    solucion = [(i, sum(D[i])) for i in range(len(D))] #i, numero ciudad; sumatorio distancias
-    solucion.sort(key=lambda x: x[1]) #ordena por sumatoria
+    v_ordenado = [(i, sum(D[i])) for i in range(len(D))] #i, numero ciudad; sumatorio distancias
+    v_ordenado.sort(key=lambda x: x[1]) #ordena por sumatoria
 
-    #inicializacion de variables necesarias para la busqueda
-    coste_sol = 0
-    n = len(solucion)
-    for i in range(n):
-        if i != n-1:
-            coste_sol += D[solucion[i][0]][solucion[i+1][0]]
-        else:
-            coste_sol += D[solucion[0][0]][solucion[n-1][0]] #esto para asegurar que sabemos la distancia de vuelta al punto de origen
+    solucion = [ciudad for ciudad, _ in v_ordenado]
+    coste_sol = calcular_coste(solucion, D)
+
+    if f_log:
+        f_log.write(f"[Greedy] Solucion Construida || Coste: {coste_sol:.2f} || Solucion: {solucion}\n")
     return solucion, coste_sol
 
 
-def greedy_aleatorio(D, rdm = None, k = None):
-    # 1. Calculamos el vector ordenado por la sumatoria de distancias al resto
+def greedy_aleatorio(D, rdm = None, k = None, f_log= None):
     # Formato: lista de tuplas (id_ciudad, suma_distancias)
     vector_ordenado = [(i, sum(D[i])) for i in range(len(D))]
     vector_ordenado.sort(key=lambda x: x[1])  # Orden ascendente por sumatoria
 
-    # Extraemos solo los identificadores de las ciudades en orden
     ciudades_disponibles = [ciudad for ciudad, _ in vector_ordenado]
     solucion = []
 
-    # 2. Construcción: en cada paso se elige al azar una entre las K primeras del vector
+    # Construcción: en cada paso se elige al azar una entre las K primeras del vector
     while len(ciudades_disponibles) > 0:
         limite_k = min(k, len(ciudades_disponibles))
         idx_aleatorio = rdm.randint(0, limite_k - 1)
 
-        # Obtenemos la ciudad elegida y la eliminamos del vector disponible
         ciudad_elegida = ciudades_disponibles.pop(idx_aleatorio)
         solucion.append(ciudad_elegida)
-
-    # 3. Cálculo del coste total del ciclo hamiltoniano resultante
     coste_sol = calcular_coste(solucion, D)
 
+    if f_log:
+        f_log.write(
+            f"[Greedy Aleatorio (K={k})] Solucion Construida || Coste: {coste_sol:.2f} || Solucion: {solucion}\n")
     return solucion, coste_sol
 
 
@@ -96,7 +91,7 @@ def operador_2opt(i,solucion,D,n,dlb,evals_restantes):
             return True, delta, evals
     return False,0,evals
 
-def busqueda_local_primer_mejor(D, rdm, k=None,it=None):
+def busqueda_local_primer_mejor(D, rdm, k=None,it=None, f_log=None):
     n = len(D)
     # Generamos una solucion inicial aleatoria basada en la semilla
     solucion, coste_sol = greedy_aleatorio(D,rdm,k) #esto crea una lista de n elementos
@@ -125,6 +120,8 @@ def busqueda_local_primer_mejor(D, rdm, k=None,it=None):
             if mejora_Local:
                 coste_sol += delta
                 hay_mejora_global = True
+                if f_log:
+                    f_log.write(f"[Eval {evals}] Movimiento 2-opt || Coste: {coste_sol:.2f} || Solucion: {solucion}\n")
             else:
                 dlb[ciudad] = 1
     return solucion, coste_sol
@@ -214,7 +211,7 @@ def menos_visitados(frec, n, rdm, muestra=10):
     return sol
 
 
-def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=20, oscila=0.5):
+def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=0.2, oscila=0.5, f_log=None):
     """
     it        -> maximo de evaluaciones de vecinos (igual que en busqueda_local_primer_mejor)
     tenencia  -> tamano de la lista tabu (MCP)
@@ -230,10 +227,12 @@ def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=20, oscila=0.5):
     mejor_coste_momento = coste
 
     dlb = [0] * n                       # DLB por posicion
-    evals = 0
+    iteracion = 0
     num_empeora = 0
     inicio = rdm.randint(0, n - 1)      # posicion desde la que se recorre i (circular)
 
+
+    limite_estancamiento = int(it * empeora) if it is not None else 200
     # Memoria a corto plazo (MCP): cola FIFO + contador para consulta O(1)
     cola_tabu = deque()
     en_tabu = {}
@@ -242,13 +241,13 @@ def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=20, oscila=0.5):
     frec = [dict() for _ in range(n)]
     actualizar_frecuencias(solucion, frec)
 
-    while it is None or evals < it:
+    while it is None or iteracion < it:
         mov = None                      # primer movimiento que mejora
         peor = None                     # mejor de los que empeoran
         mejor_peor = math.inf
 
         for cont in range(n):
-            if (it is not None and evals >= it) or mov is not None:
+            if (it is not None and iteracion >= it) or mov is not None:
                 break
             i = (inicio + cont) % n
             if dlb[i] == 1:
@@ -256,14 +255,14 @@ def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=20, oscila=0.5):
             mejora_local = False
 
             for j in range(i + 1, n):
-                if it is not None and evals >= it:
+                if it is not None and iteracion >= it:
                     break
                 a, b = solucion[i], solucion[j]
-                clave = (a, b, i, j) if a < b else (b, a, i, j)
+                clave = (min(a,b), max(a,b))
+
                 if en_tabu.get(clave, 0) > 0:
                     continue
 
-                evals += 1
                 delta = delta_intercambio(solucion, D, n, i, j)
 
                 if delta < -0.0001:
@@ -286,12 +285,18 @@ def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=20, oscila=0.5):
             cola_tabu.clear()
             en_tabu.clear()
             dlb = [0] * n
-            evals += 1
+            iteracion += 1
+            if f_log:
+                f_log.write(f"[Iter {iteracion}] Vecindario Bloqueado/Tabú total -> Reseteo de Lista Tabú\n")
             continue
 
         i, j, delta = mov
+        c1, c2 = solucion[i], solucion[j]
         solucion[i], solucion[j] = solucion[j], solucion[i]
         coste += delta
+
+        if f_log:
+            f_log.write(f"[Iter {iteracion}] Intercambio: ({c1} <-> {c2}) || Coste: {coste:.2f} || Solucion: {solucion}\n")
 
         if coste < mejor_coste_global - 1e-9:
             mejor_coste_global = coste
@@ -307,28 +312,38 @@ def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=20, oscila=0.5):
 
         # actualizar MCP (ciudades y posiciones del intercambio)
         a, b = solucion[i], solucion[j]
-        clave = (a, b, i, j) if a < b else (b, a, i, j)
+        clave = (min(a, b), max(a, b))
+
         cola_tabu.append(clave)
         en_tabu[clave] = en_tabu.get(clave, 0) + 1
+
         if len(cola_tabu) > tenencia:
             vieja = cola_tabu.popleft()
             en_tabu[vieja] -= 1
 
         dlb = [0] * n
+        iteracion += 1
 
         # estancamiento -> oscilacion estrategica
-        if num_empeora >= empeora and (it is None or evals < it):
+        if num_empeora >= limite_estancamiento and (it is None or iteracion < it):
             num_empeora = 0
             if rdm.random() < oscila:
                 solucion = mas_visitados(frec, n, rdm)
+                tipo_osc= "Intensificacion"
             else:
                 solucion = menos_visitados(frec, n, rdm)
+                tipo_osc = "Diversificacion"
+
             coste = calcular_coste(solucion, D)
-            evals += 1
             mejor_coste_momento = coste
+            if f_log:
+                f_log.write(
+                    f"[Iter {iteracion}] ESTANCAMIENTO -> Oscilacion ({tipo_osc}) || Nuevo Coste: {coste:.2f}\n")
+
             if coste < mejor_coste_global:
                 mejor_coste_global = coste
                 mejor_global = solucion[:]
+
             cola_tabu.clear()
             en_tabu.clear()
             dlb = [0] * n

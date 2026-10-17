@@ -1,6 +1,7 @@
 import sys
 import math
 import time
+import os
 import random
 import pandas as pd
 
@@ -14,6 +15,7 @@ def leer_parametros(ruta_fichero):
     semillas, algoritmos, datasets = [], [], []
     k = None
     iteraciones = None
+    tenencia, empeora, oscila= 0,0,0
 
     with open(ruta_fichero, 'r') as f:
         lineas = f.readlines() #readlines lo que hace es devolver una lista donde cada elemento es una linea
@@ -31,8 +33,12 @@ def leer_parametros(ruta_fichero):
         elif 'dataset' in etiqueta: datasets = valores
         elif etiqueta == 'k': k = int(valores[0])
         elif 'iteraciones' in etiqueta: iteraciones = int(valores[0])
+        elif 'tenencia' in etiqueta: tenencia = int(valores[0])
+        elif 'empeora' in etiqueta: empeora = float(valores[0])
+        elif 'oscila' in etiqueta: oscila = float(valores[0])
 
-    return semillas, algoritmos, datasets, k, iteraciones
+
+    return semillas, algoritmos, datasets, k, iteraciones, tenencia, empeora, oscila
 
 
 # =====================================================================
@@ -120,34 +126,33 @@ def leer_dataset(nombre_dataset):
 # =====================================================================
 # 3. Ejecucion de la Experimentacion
 # =====================================================================
-def mis_algoritmos(algoritmo, datos, rdm, k,_it):
+def mis_algoritmos(algoritmo, datos, rdm, k,_it, _t, _e, _o, f_log=None):
     algoritmos = {
-        'greedy': lambda D, r, _k,_it: local.greedy(D, r),
-        'greedyaleatorio': lambda D, r, _k,_it: local.greedy_aleatorio(D, r, _k),
-        'busquedalocal': lambda D, r, _k,_it: local.busqueda_local_primer_mejor(D,rdm,k,_it),
-        'busquedatabu': lambda D, r, _k, _it: local.busqueda_tabu(D, r, _k, _it)
+        'greedy': lambda D, r, _k,_it, _t, _e, _o,log: local.greedy(D, r,log),
+        'greedyaleatorio': lambda D, r, _k,_it, _t, _e, _o,log: local.greedy_aleatorio(D, r, _k,log),
+        'busquedalocal': lambda D, r, _k,_it, _t, _e, _o,log: local.busqueda_local_primer_mejor(D,rdm,k,_it, log),
+        'busquedatabu': lambda D, r, _k,_it, _t, _e, _o,log: local.busqueda_tabu(D, r, _k,_it, _t, _e, _o, log)
     }
 
     clave = algoritmo.strip().lower().replace(" ", "")
     if clave not in algoritmos:
         raise ValueError(f"Algoritmo desconocido: {algoritmo}")
 
-    return algoritmos[clave](datos, rdm, k, _it)
-
+    return algoritmos[clave](datos, rdm, k, _it, _t, _e, _o, f_log)
 
 # Ejecucion y visualizacion de parametros
 ruta_proyecto = "."  # <-- ajustar a la ruta real del proyecto
 ruta_params = f"{ruta_proyecto}/parametros.txt"
-semillas, algoritmos, datasets, k, iteraciones = leer_parametros(ruta_params)
-
+semillas, algoritmos, datasets, k, iteraciones, tenencia, empeora, oscila = leer_parametros(ruta_params)
 print("\033[1mPARAMETROS CARGADOS CORRECTAMENTE\033[0m")
 summary = pd.DataFrame({
-    'Parametro': ['Semillas', 'Algoritmos', 'Datasets', 'K'],
-    'Valores': [str(semillas), ", ".join(algoritmos), ", ".join(datasets), str(k)]
+    'Parametro': ['Semillas', 'Algoritmos', 'Datasets', 'K', 'Iteraciones', 'Tenencia', 'Empeora', 'Oscila'],
+    'Valores': [str(semillas), ", ".join(algoritmos), ", ".join(datasets), str(k), str(iteraciones), str(tenencia), str(empeora), str(oscila)]
 })
 print(summary)
-
 print(f"\033[1mINICIANDO EXPERIMENTACION\033[0m\n" + "=" * 30)
+
+os.makedirs("logs",exist_ok=True)
 
 for dataset in datasets:
     print(f"\n\033[1;34mDATASET: {dataset}\033[0m")
@@ -159,11 +164,23 @@ for dataset in datasets:
         for algoritmo in algoritmos:
             if algoritmo.strip().lower() == 'greedy' and semilla != semillas[0]:
                 continue
-            print(f"  > {algoritmo:16} | Semilla: {semilla:6}", end="", flush = True)
+            #print(f"  > {algoritmo:16} | Semilla: {semilla:6}", end="", flush = True)
+            nombre_log = f"logs/{algoritmo.strip().lower().replace(' ', ' ')}.log"
+            with open(nombre_log, 'a', encoding="utf-8") as f_log:
+                f_log.write(f"\n{'='*50}\n")
+                f_log.write(f"Info de la ejecucion\n")
+                f_log.write(f"Algoritmo: {algoritmo}\n")
+                f_log.write(f"\Dataset: {dataset} | Semilla: {semilla}\n")
+                f_log.write(f"\Parametros: K={k},Iteraciones={iteraciones}, Tenencia={tenencia}, Empeora={empeora}, Oscila={oscila}\n")
+                f_log.write(f"{'='*50}\n")
 
-            inicio = time.time()
-            solucion, coste = mis_algoritmos(algoritmo, datos, rdm, k,iteraciones)
-            fin = time.time()
+                print(f" > {algoritmo:16} | Semilla: {semilla:8}", end="", flush=True)
+
+                inicio = time.time()
+                solucion, coste = mis_algoritmos(algoritmo, datos, rdm, k,iteraciones, tenencia, empeora, oscila, f_log)
+                fin = time.time()
+
+                f_log.write(f"FIN EJECUCION || COSTE FINAL: {coste:.2f} || TIEMPO: {(fin-inicio)*1000:.2f}ms\n")
 
             print(f" | Coste: {coste:12.2f} | Tiempo: {(fin-inicio)*1000:.4f}ms")
 
