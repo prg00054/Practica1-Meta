@@ -3,7 +3,7 @@ from collections import deque
 import random
 
 # algoritmo greedy
-def greedy(D, rdm = None, f_log= None):
+def greedy(D, f_log= None):
     #primero tenemos que calcular la ciudad por la que comenzaremos
     v_ordenado = [(i, sum(D[i])) for i in range(len(D))] #i, numero ciudad; sumatorio distancias
     v_ordenado.sort(key=lambda x: x[1]) #ordena por sumatoria

@@ -128,7 +128,7 @@ def leer_dataset(nombre_dataset):
 # =====================================================================
 def mis_algoritmos(algoritmo, datos, rdm, k,_it, _t, _e, _o, f_log=None):
     algoritmos = {
-        'greedy': lambda D, r, _k,_it, _t, _e, _o,log: local.greedy(D, r,log),
+        'greedy': lambda D, r, _k,_it, _t, _e, _o,log: local.greedy(D,log),
         'greedyaleatorio': lambda D, r, _k,_it, _t, _e, _o,log: local.greedy_aleatorio(D, r, _k,log),
         'busquedalocal': lambda D, r, _k,_it, _t, _e, _o,log: local.busqueda_local_primer_mejor(D,rdm,k,_it, log),
         'busquedatabu': lambda D, r, _k,_it, _t, _e, _o,log: local.busqueda_tabu(D, r, _k,_it, _t, _e, _o, log)

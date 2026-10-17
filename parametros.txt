@@ -2,7 +2,7 @@ semillas: 77377461, 73774617, 37746177
 algoritmos: Greedy, GreedyAleatorio, BusquedaLocal, BusquedaTabu
 datasets: a280, ch130, pr144, u1060
 k: 5
-iteraciones: 10000
+iteraciones: 1000
 tenencia: 10
 empeora: 0.2
 oscila: 0.5
