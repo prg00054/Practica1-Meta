@@ -47,90 +47,24 @@ def calcular_coste(ruta, D):
     return coste
 
 
-def operador_2opt(i,solucion,D,n,dlb,evals_restantes):
+def operador_2opt(i, solucion, D, n, dlb, evals_restantes):
     evals = 0
     ciudad_i = solucion[i]
-    # necesitamos los arcos de las ciudades que van antes y despues
-    ant_ciudad_i = solucion[i - 1]
-    post_ciudad_i = solucion[(i + 1) % n]
 
     for j in range(i + 1, n):
         if evals >= evals_restantes:
             break
         evals += 1
 
-        ciudad_j = solucion[j]
-        ant_ciudad_j = solucion[(j-1) % n]
-        post_ciudad_j = solucion[(j+1) % n]
+        delta = delta_intercambio(solucion, D, n, i, j)
 
-        #caso en el que las ciudades estan separadas
-        if j != i + 1 and not (i==0 and j == n-1):
-            arcos_viejos = (D[ant_ciudad_i][ciudad_i] + D[ciudad_i][post_ciudad_i] +
-                            D[ant_ciudad_j][ciudad_j] + D[ciudad_j][post_ciudad_j])
-            arcos_nuevos = (D[ant_ciudad_i][ciudad_j] + D[ciudad_j][post_ciudad_i] +
-                            D[ant_ciudad_j][ciudad_i] + D[ciudad_i][post_ciudad_j])
-            delta = arcos_nuevos - arcos_viejos
-
-        else:
-            # caso en el que las ciudades estan adyacentes
-            if j == i+1:
-                arcos_viejos = D[ant_ciudad_i][ciudad_i] + D[ciudad_j][post_ciudad_j]
-                arcos_nuevos = D[ant_ciudad_i][ciudad_j] + D[ciudad_i][post_ciudad_j]
-                delta = arcos_nuevos - arcos_viejos
-            else:
-                # si las ciudades son adyacentes y son la primera y la ultima
-                arcos_viejos = D[ant_ciudad_j][ciudad_j] + D[ciudad_i][post_ciudad_i]
-                arcos_nuevos = D[ant_ciudad_j][ciudad_i] + D[ciudad_j][post_ciudad_i]
-                delta = arcos_nuevos - arcos_viejos
-
-            #si encontramos mejora
         if delta < -0.0001:
-            solucion[i], solucion[j] = solucion[j], solucion[i]
+            ciudad_j = solucion[j]
+            solucion[i], solucion[j] = ciudad_j, ciudad_i
             dlb[ciudad_i] = 0
             dlb[ciudad_j] = 0
             return True, delta, evals
-    return False,0,evals
-
-def busqueda_local_primer_mejor(D, rdm, k=None,it=None, f_log=None):
-    n = len(D)
-    # Generamos una solucion inicial aleatoria basada en la semilla
-    solucion, coste_sol = greedy_aleatorio(D,rdm,k) #esto crea una lista de n elementos
-
-    # Don't Look Bits (DLB)
-    dlb = [0] * n
-    evals = 0
-    hay_mejora_global = True
-
-    while hay_mejora_global and (it is None or evals < it):
-        hay_mejora_global = False
-
-        for i in range(n):
-            if it is not None and evals >= it:
-                break
-            ciudad = solucion[i]
-
-            if dlb[ciudad] == 1:
-                continue
-
-            restantes = (it - evals) if it is not None else n
-
-            mejora_Local, delta, usadas = operador_2opt(i,solucion,D,n,dlb,restantes)
-            evals += usadas
-
-            if mejora_Local:
-                coste_sol += delta
-                hay_mejora_global = True
-                if f_log:
-                    f_log.write(f"[Eval {evals}] Movimiento 2-opt || Coste: {coste_sol:.2f} || Solucion: {solucion}\n")
-            else:
-                dlb[ciudad] = 1
-    return solucion, coste_sol
-
-
-# =====================================================================
-# BUSQUEDA TABU (sobre primer mejor, con memoria a corto y largo plazo)
-# =====================================================================
-
+    return False, 0, evals
 
 def delta_intercambio(solucion, D, n, i, j):
     """Variacion de coste al intercambiar las ciudades de las posiciones i<j."""
@@ -141,19 +75,55 @@ def delta_intercambio(solucion, D, n, i, j):
     ant_j = solucion[j - 1]
     post_j = solucion[(j + 1) % n]
 
+    # caso en el que las ciudades estan separadas
     if j != i + 1 and not (i == 0 and j == n - 1):
-        # posiciones no adyacentes
         viejos = D[ant_i][ciudad_i] + D[ciudad_i][post_i] + D[ant_j][ciudad_j] + D[ciudad_j][post_j]
         nuevos = D[ant_i][ciudad_j] + D[ciudad_j][post_i] + D[ant_j][ciudad_i] + D[ciudad_i][post_j]
+        # caso en el que las ciudades estan adyacentes
     elif j == i + 1:
-        # posiciones adyacentes
         viejos = D[ant_i][ciudad_i] + D[ciudad_j][post_j]
         nuevos = D[ant_i][ciudad_j] + D[ciudad_i][post_j]
+        # si las ciudades son adyacentes y son la primera y la ultima
     else:
-        # primera y ultima posicion (adyacentes por ser ciclo)
         viejos = D[ant_j][ciudad_j] + D[ciudad_i][post_i]
         nuevos = D[ant_j][ciudad_i] + D[ciudad_j][post_i]
     return nuevos - viejos
+
+# =====================================================================
+# BUSQUEDA TABU (sobre primer mejor, con memoria a corto y largo plazo)
+# =====================================================================
+
+
+def busqueda_local_primer_mejor(D, rdm, k=None, it=None, f_log=None):
+    n = len(D)
+    solucion, coste_sol = greedy_aleatorio(D, rdm, k)
+
+    dlb = [0] * n
+    iteraciones = 0                  # movimientos aplicados
+    hay_mejora_global = True
+
+    while hay_mejora_global and (it is None or iteraciones < it):
+        hay_mejora_global = False
+
+        for i in range(n):
+            if it is not None and iteraciones >= it:
+                break
+            ciudad = solucion[i]
+            if dlb[ciudad] == 1:
+                continue
+
+            mejora, delta, _ = operador_2opt(i, solucion, D, n, dlb, n)
+
+            if mejora:
+                coste_sol += delta
+                iteraciones += 1
+                hay_mejora_global = True
+                if f_log:
+                    f_log.write(f"[Iter {iteraciones}] 2-opt || Coste: {coste_sol:.2f}\n")
+            else:
+                dlb[ciudad] = 1
+    return solucion, coste_sol
+
 
 
 def actualizar_frecuencias(solucion, frec):
@@ -211,13 +181,7 @@ def menos_visitados(frec, n, rdm, muestra=10):
     return sol
 
 
-def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=0.2, oscila=0.5, f_log=None):
-    """
-    it        -> maximo de evaluaciones de vecinos (igual que en busqueda_local_primer_mejor)
-    tenencia  -> tamano de la lista tabu (MCP)
-    empeora   -> movimientos seguidos sin mejorar el mejor del momento antes de oscilar
-    oscila    -> probabilidad de intensificar (1-oscila = diversificar)
-    """
+def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=0.05, oscila=0.5, f_log=None):
     n = len(D)
     solucion, coste = greedy_aleatorio(D, rdm, k)
     solucion = list(solucion)
@@ -226,28 +190,28 @@ def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=0.2, oscila=0.5,
     mejor_coste_global = coste
     mejor_coste_momento = coste
 
-    dlb = [0] * n                       # DLB por posicion
+    dlb = [0] * n
     iteracion = 0
     num_empeora = 0
-    inicio = rdm.randint(0, n - 1)      # posicion desde la que se recorre i (circular)
-
+    inicio = rdm.randint(0, n - 1)
 
     limite_estancamiento = int(it * empeora) if it is not None else 200
-    # Memoria a corto plazo (MCP): cola FIFO + contador para consulta O(1)
+
+    # MCP: cola de los ultimos 'tenencia' movimientos + contador para consulta O(1)
     cola_tabu = deque()
     en_tabu = {}
 
-    # Memoria a largo plazo (MLP): frecuencia de arcos
+    # MLP: frecuencia de arcos
     frec = [dict() for _ in range(n)]
     actualizar_frecuencias(solucion, frec)
 
     while it is None or iteracion < it:
-        mov = None                      # primer movimiento que mejora
-        peor = None                     # mejor de los que empeoran
+        mov = None
+        peor = None
         mejor_peor = math.inf
 
         for cont in range(n):
-            if (it is not None and iteracion >= it) or mov is not None:
+            if mov is not None:
                 break
             i = (inicio + cont) % n
             if dlb[i] == 1:
@@ -255,13 +219,9 @@ def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=0.2, oscila=0.5,
             mejora_local = False
 
             for j in range(i + 1, n):
-                if it is not None and iteracion >= it:
-                    break
                 a, b = solucion[i], solucion[j]
-                clave = (min(a,b), max(a,b))
-
-                if en_tabu.get(clave, 0) > 0:
-                    continue
+                if en_tabu.get((min(a, b), max(a, b)), 0) > 0:
+                    continue            # movimiento tabu: descartado (sin aspiracion)
 
                 delta = delta_intercambio(solucion, D, n, i, j)
 
@@ -281,22 +241,21 @@ def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=0.2, oscila=0.5,
             mov = peor
 
         if mov is None:
-            # todos los movimientos eran tabu: se vacia la lista para poder avanzar
             cola_tabu.clear()
             en_tabu.clear()
             dlb = [0] * n
             iteracion += 1
             if f_log:
-                f_log.write(f"[Iter {iteracion}] Vecindario Bloqueado/Tabú total -> Reseteo de Lista Tabú\n")
+                f_log.write(f"[Iter {iteracion}] Vecindario bloqueado -> reseteo de lista tabu\n")
             continue
 
         i, j, delta = mov
-        c1, c2 = solucion[i], solucion[j]
-        solucion[i], solucion[j] = solucion[j], solucion[i]
+        a, b = solucion[i], solucion[j]          # ciudades antes del intercambio
+        solucion[i], solucion[j] = b, a
         coste += delta
 
         if f_log:
-            f_log.write(f"[Iter {iteracion}] Intercambio: ({c1} <-> {c2}) || Coste: {coste:.2f} || Solucion: {solucion}\n")
+            f_log.write(f"[Iter {iteracion}] Intercambio ({a} <-> {b}) || Coste: {coste:.2f}\n")
 
         if coste < mejor_coste_global - 1e-9:
             mejor_coste_global = coste
@@ -310,13 +269,9 @@ def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=0.2, oscila=0.5,
 
         actualizar_frecuencias(solucion, frec)
 
-        # actualizar MCP (ciudades y posiciones del intercambio)
-        a, b = solucion[i], solucion[j]
         clave = (min(a, b), max(a, b))
-
         cola_tabu.append(clave)
         en_tabu[clave] = en_tabu.get(clave, 0) + 1
-
         if len(cola_tabu) > tenencia:
             vieja = cola_tabu.popleft()
             en_tabu[vieja] -= 1
@@ -324,12 +279,11 @@ def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=0.2, oscila=0.5,
         dlb = [0] * n
         iteracion += 1
 
-        # estancamiento -> oscilacion estrategica
         if num_empeora >= limite_estancamiento and (it is None or iteracion < it):
             num_empeora = 0
             if rdm.random() < oscila:
                 solucion = mas_visitados(frec, n, rdm)
-                tipo_osc= "Intensificacion"
+                tipo_osc = "Intensificacion"
             else:
                 solucion = menos_visitados(frec, n, rdm)
                 tipo_osc = "Diversificacion"
@@ -337,8 +291,7 @@ def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=0.2, oscila=0.5,
             coste = calcular_coste(solucion, D)
             mejor_coste_momento = coste
             if f_log:
-                f_log.write(
-                    f"[Iter {iteracion}] ESTANCAMIENTO -> Oscilacion ({tipo_osc}) || Nuevo Coste: {coste:.2f}\n")
+                f_log.write(f"[Iter {iteracion}] ESTANCAMIENTO -> {tipo_osc} || Nuevo Coste: {coste:.2f}\n")
 
             if coste < mejor_coste_global:
                 mejor_coste_global = coste
