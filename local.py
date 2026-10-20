@@ -194,7 +194,7 @@ def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=0.05, oscila=0.5
 
     limite_estancamiento = int(it * empeora) if it is not None else 200
 
-    # MCP: cola de los ultimos 'tenencia' movimientos + contador para consulta O(1)
+    # MCP: cola de los ultimos 'tenencia' movimientos (ciudades + posiciones) + contador para consulta O(1)
     cola_tabu = deque()
     en_tabu = {}
 
@@ -217,8 +217,9 @@ def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=0.05, oscila=0.5
 
             for j in range(i + 1, n):
                 a, b = solucion[i], solucion[j]
-                if en_tabu.get((min(a, b), max(a, b)), 0) > 0:
-                    continue            # movimiento tabu: descartado (sin aspiracion)
+                if (en_tabu.get(('c', min(a, b), max(a, b)), 0) > 0
+                        or en_tabu.get(('p', i, j), 0) > 0):
+                    continue            # movimiento tabu (ciudades o posiciones): descartado (sin aspiracion)
 
                 delta = delta_intercambio(solucion, D, n, i, j)
 
@@ -266,12 +267,14 @@ def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=0.05, oscila=0.5
 
         actualizar_frecuencias(solucion, frec)
 
-        clave = (min(a, b), max(a, b))
-        cola_tabu.append(clave)
-        en_tabu[clave] = en_tabu.get(clave, 0) + 1
+        # por cada movimiento se guardan dos valores: el par de ciudades y el par de posiciones
+        claves = (('c', min(a, b), max(a, b)), ('p', i, j))
+        cola_tabu.append(claves)
+        for clave in claves:
+            en_tabu[clave] = en_tabu.get(clave, 0) + 1
         if len(cola_tabu) > tenencia:
-            vieja = cola_tabu.popleft()
-            en_tabu[vieja] -= 1
+            for vieja in cola_tabu.popleft():
+                en_tabu[vieja] -= 1
 
         dlb = [0] * n
         iteracion += 1
