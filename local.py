@@ -47,24 +47,19 @@ def calcular_coste(ruta, D):
     return coste
 
 
-def operador_2opt(i, solucion, D, n, dlb, evals_restantes):
-    evals = 0
-    ciudad_i = solucion[i]
-
-    for j in range(i + 1, n):
-        if evals >= evals_restantes:
-            break
-        evals += 1
-
-        delta = delta_intercambio(solucion, D, n, i, j)
-
+def operador_2opt(i, solucion, D, n):
+    """Prueba intercambiar la ciudad de la posicion i con TODAS las demas
+    posiciones (j<i y j>i). Primer mejor: aplica el primero que mejora."""
+    for j in range(n):
+        if j == i:
+            continue
+        a, b = (i, j) if i < j else (j, i)
+        delta = delta_intercambio(solucion, D, n, a, b)
         if delta < -0.0001:
-            ciudad_j = solucion[j]
-            solucion[i], solucion[j] = ciudad_j, ciudad_i
-            dlb[ciudad_i] = 0
-            dlb[ciudad_j] = 0
-            return True, delta, evals
-    return False, 0, evals
+            ci, cj = solucion[a], solucion[b]
+            solucion[a], solucion[b] = cj, ci
+            return True, delta, ci, cj
+    return False, 0, None, None
 
 def delta_intercambio(solucion, D, n, i, j):
     """Variacion de coste al intercambiar las ciudades de las posiciones i<j."""
@@ -112,14 +107,16 @@ def busqueda_local_primer_mejor(D, rdm, k=None, it=None, f_log=None):
             if dlb[ciudad] == 1:
                 continue
 
-            mejora, delta, _ = operador_2opt(i, solucion, D, n, dlb, n)
+            mejora, delta, ci, cj = operador_2opt(i, solucion, D, n)
 
             if mejora:
+                dlb[ci] = 0
+                dlb[cj] = 0
                 coste_sol += delta
                 iteraciones += 1
                 hay_mejora_global = True
                 if f_log:
-                    f_log.write(f"[Iter {iteraciones}] 2-opt || Coste: {coste_sol:.2f}\n")
+                    f_log.write(f"[Iter {iteraciones}] Intercambio ({ci} <-> {cj}) || Coste: {coste_sol:.2f}\n")
             else:
                 dlb[ciudad] = 1
     return solucion, coste_sol
