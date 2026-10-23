@@ -6,10 +6,10 @@ import random
 import pandas as pd
 
 import local
-import AlgGRE_Clase_Grupo5
-import AlgGREA_Clase_Grupo5
-import AlgBL_Clase_Grupo5
-import AlgTA_Clase_Grupo5
+import AlgGRE_Clase5_Grupo12
+import AlgGREA_Clase5_Grupo12
+import AlgBL_Clase5_Grupo12
+import AlgTA_Clase5_Grupo12
 
 # =====================================================================
 # 1. Carga de Parametros

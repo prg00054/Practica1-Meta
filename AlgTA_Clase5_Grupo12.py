@@ -1,7 +1,7 @@
 import math
 from collections import deque
 import random
-import AlgGREA_Clase_Grupo5
+import AlgGREA_Clase5_Grupo12
 
 
 def calcular_coste(ruta, D):
