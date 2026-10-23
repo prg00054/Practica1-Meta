@@ -6,6 +6,10 @@ import random
 import pandas as pd
 
 import local
+import AlgGRE_Clase_Grupo5
+import AlgGREA_Clase_Grupo5
+import AlgBL_Clase_Grupo5
+import AlgTA_Clase_Grupo5
 
 # =====================================================================
 # 1. Carga de Parametros
@@ -128,10 +132,10 @@ def leer_dataset(nombre_dataset):
 # =====================================================================
 def mis_algoritmos(algoritmo, datos, rdm, k,_it, _t, _e, _o, f_log=None):
     algoritmos = {
-        'greedy': lambda D, r, _k,_it, _t, _e, _o,log: local.greedy(D,log),
-        'greedyaleatorio': lambda D, r, _k,_it, _t, _e, _o,log: local.greedy_aleatorio(D, r, _k,log),
-        'busquedalocal': lambda D, r, _k,_it, _t, _e, _o,log: local.busqueda_local_primer_mejor(D,rdm,k,_it, log),
-        'busquedatabu': lambda D, r, _k,_it, _t, _e, _o,log: local.busqueda_tabu(D, r, _k,_it, _t, _e, _o, log)
+        'greedy': lambda D, r, _k,_it, _t, _e, _o,log: AlgGRE_Clase_Grupo5.greedy(D,log),
+        'greedyaleatorio': lambda D, r, _k,_it, _t, _e, _o,log: AlgGREA_Clase_Grupo5.greedy_aleatorio(D, r, _k,log),
+        'busquedalocal': lambda D, r, _k,_it, _t, _e, _o,log: AlgBL_Clase_Grupo5.busqueda_local_primer_mejor(D,rdm,k,_it, log),
+        'busquedatabu': lambda D, r, _k,_it, _t, _e, _o,log: AlgTA_Clase_Grupo5.busqueda_tabu(D, r, _k,_it, _t, _e, _o, log)
     }
 
     clave = algoritmo.strip().lower().replace(" ", "")
