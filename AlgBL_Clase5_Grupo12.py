@@ -53,7 +53,7 @@ def delta_intercambio(solucion, D, n, i, j):
 
 def busqueda_local_primer_mejor(D, rdm, k=None, it=None, f_log=None):
     n = len(D)
-    solucion, coste_sol = AlgGREA_Clase_Grupo5.greedy_aleatorio(D, rdm, k)
+    solucion, coste_sol = AlgGREA_Clase5_Grupo12.greedy_aleatorio(D, rdm, k)
 
     dlb = [0] * n
     iteraciones = 0                  # movimientos aplicados

@@ -92,7 +92,7 @@ def menos_visitados(frec, n, rdm, muestra=10):
 
 def busqueda_tabu(D, rdm, k=None, it=None, tenencia=10, empeora=0.05, oscila=0.5, f_log=None):
     n = len(D)
-    solucion, coste = AlgGREA_Clase_Grupo5.greedy_aleatorio(D, rdm, k)
+    solucion, coste = AlgGREA_Clase5_Grupo12.greedy_aleatorio(D, rdm, k)
     solucion = list(solucion)
 
     mejor_global = solucion[:]
